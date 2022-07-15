@@ -20,7 +20,7 @@ public class OpenBrowser implements CommandLineRunner {
     @Override
     public void run(String... args) {
         try {
-            Runtime.getRuntime().exec("cmd   /c   start   http://127.0.0.1:8081/file-view/index.html");
+            Runtime.getRuntime().exec("cmd   /c   start   http://127.0.0.1:8081/officePreview/index.html");
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
         }
