@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <!-- import Vue.js -->
+    <script src="https://unpkg.com/vue@next"></script>
+    <!-- import stylesheet -->
+    <link rel="stylesheet" href="https://unpkg.com/view-ui-plus/dist/styles/viewuiplus.css">
+    <!-- import View UI Plus -->
+    <script src="https://unpkg.com/view-ui-plus"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            width: 800px;
+            margin: 0 auto;
+            padding-top: 50px;
+        }
+
+        .icon {
+            border-top: 1px solid #F0F2F3;
+            padding-top: 20px;
+            width: 800px;
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            right: 0;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+        }
+
+        .icon img {
+            margin: 0 50px;
+            height: 30px;
+            cursor: pointer;
+        }
+    </style>
+    <title>office文档在线预览</title>
+</head>
+<body>
+<div id="app">
+    <Alert type="success" show-icon closable>
+        温馨提示
+        <template #desc>通过本页面上传的文档所有人可见，请勿上传重要或私密文档进行测试;
+            服务器不保存文档，所有上传的文件都是临时文件，上传5分钟后自动删除;为方便大家测试，请勿频繁重复上传，感谢你的配合
+        </template>
+    </Alert>
+
+    <Upload
+            multiple
+            type="drag"
+            name="file"
+            :accept="'.doc,.docx,.xls,.xlsx,.ppt,.pptx'"
+            :format="['doc', 'docx', 'xls','xlsx','ppt',pptx]"
+            :max-size="10240"
+            :on-exceeded-size="handleMaxSize"
+            :on-success="handleSuccess"
+            :on-error="handleError"
+            :action="baseUrl+'/uploadFile'">
+        <div style="padding: 20px 0">
+            <Icon type="ios-cloud-upload" size="52" style="color: #3399ff"></Icon>
+            <p>点击或者拖拽文档上传</p>
+        </div>
+    </Upload>
+    <i-table :columns="columns" :data="data">
+        <template #action="{ row, index }">
+            <i-button type="primary" size="small" style="margin-right: 5px" @click="view(row)">预览</i-button>
+        </template>
+    </i-table>
+    <div class="icon">
+        <img src="blog.svg" @click="openUrl('https://home.cnblogs.com/u/lwjQAQ/')"/>
+        <img src="github.svg" @click="openUrl('https://github.com/TomHusky')"/>
+        <img src="gitee.svg" @click="openUrl('https://gitee.com/luowenjie98')"/>
+    </div>
+</div>
+<script>
+    const app = Vue.createApp({
+        data() {
+            return {
+                baseUrl: "http://localhost:8081/officePreview",
+                columns: [
+                    {
+                        title: '文件名称',
+                        key: 'fileName',
+                        align: 'center'
+                    },
+                    {
+                        title: '上传时间',
+                        key: 'createTime',
+                        align: 'center'
+                    },
+                    {
+                        title: '操作',
+                        slot: 'action',
+                        align: 'center'
+                    },
+                ],
+                data: []
+            }
+        },
+        mounted() {
+            this.queryFileList();
+        },
+        methods: {
+            openUrl(url) {
+                console.log(url);
+                window.open(url)
+            },
+            handleMaxSize(file) {
+                this.$Notice.warning({
+                    title: "Exceeding file size limit",
+                    desc: "File  " + file.name + " is too large, no more than 10M.",
+                });
+            },
+            handleSuccess(response, file) {
+                this.data.push(response.data)
+            },
+            handleError() {
+                this.$Message.error("上传失败！");
+            },
+            queryFileList() {
+                axios.get(this.baseUrl + "/queryFileList").then(res => {
+                    this.data = res.data.data;
+                })
+            },
+            view(item) {
+                this.$Spin.show();
+                axios.get(this.baseUrl + "/viewFile?fileNo=" + item.fileNo, {responseType: "blob"}).then(res => {
+                    this.$Spin.hide();
+                    let type = res.headers['file-type'];
+                    let blob;
+                    if (type === "html") {
+                        blob = new Blob([res.data], {type: 'text/html'});
+                    } else {
+                        blob = new Blob([res.data], {type: 'application/pdf'})
+                    }
+                    let pdfSrc = window.URL.createObjectURL(blob)
+                    window.open(pdfSrc)//新窗口打开，借用浏览器去打印
+                }).catch(error => {
+                    this.$Message.error("预览失败！");
+                    this.$Spin.hide();
+                })
+            }
+        }
+    });
+    app.use(ViewUIPlus);
+    app.mount("#app");
+</script>
+</body>
+</html>

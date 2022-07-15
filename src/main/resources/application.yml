@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: kkfile-spring-starter-demo
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 100MB
+server:
+  port: 8081
+  servlet:
+    context-path: /officePreview
+
+office:
+  plugin:
+    home: C:\\Program Files\\LibreOffice
+    task:
+      timeout: 1M
+    server:
+      ports: 2001,2002
+  cache:
+    enabled: true
+    type: default
+    file:
+      dir: D:\project\demo
+    clean:
+      cron: 0 0 1 * * *
